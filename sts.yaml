@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: prometheus # has to match .spec.template.metadata.labels
+  serviceName: "csvserver"
+  replicas: 1 # by default is 1
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+      - name: prometheus
+        image: docker.io/prom/prometheus:v2.36.2
+        ports:
+        - containerPort: 9090
+          name: prometheus
+        volumeMounts:
+        - name: prometheus
+          mountPath: /etc/prometheus/prometheus.yml
+          subPath: prometheus.yml
+        - name: prom
+          mountPath: /prometheus
+      volumes:
+        - name: prometheus
+          configMap:
+            name: prometheus-config   
+  volumeClaimTemplates:
+  - metadata:
+      name: prom
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "standard"
+      resources:
+        requests:
+          storage: 1Gi
